@@ -33,7 +33,7 @@ button{cursor:pointer}
 h1{font-size:34px;font-weight:800;letter-spacing:-.02em;margin:0;line-height:1.1;text-wrap:balance}
 .sub{color:var(--muted);font-size:13px;margin-top:2px;font-variant-numeric:tabular-nums}
 .add{border:0;background:var(--fill);color:var(--accent);font-weight:700;font-size:15px;padding:8px 14px;border-radius:999px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
-.seg{display:flex;background:var(--fill);border-radius:9px;padding:2px;margin-top:12px;max-width:280px}
+.seg{display:flex;background:var(--fill);border-radius:9px;padding:2px;margin-top:12px}
 .seg button{flex:1;border:0;background:transparent;padding:6px 0;border-radius:7px;font-size:13px;font-weight:600;color:var(--fg)}
 .seg button[aria-pressed="true"]{background:var(--bg);box-shadow:0 1px 3px rgba(0,0,0,.14)}
 .banner{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--fill);border-radius:12px;padding:12px 14px;margin:14px 0 4px;font-size:13px;color:var(--muted)}
@@ -123,6 +123,30 @@ h1{font-size:34px;font-weight:800;letter-spacing:-.02em;margin:0;line-height:1.1
 .fab{position:fixed;z-index:6;right:max(18px,calc((100vw - 520px) / 2 + 18px),env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));width:56px;height:56px;border-radius:50%;border:0;background:var(--accent);color:#fff;display:grid;place-items:center;box-shadow:0 6px 20px rgba(0,0,0,.25)}
 .fab svg{width:22px;height:22px}
 .notice{background:var(--fill);color:var(--muted);font-size:12px;line-height:1.5;text-align:center;padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));text-wrap:balance;border-bottom:1px solid var(--line)}
+.stats{margin-top:16px;display:flex;flex-direction:column;gap:22px}
+.periods{display:flex;gap:6px}
+.periods button{border:1px solid var(--line);background:var(--bg);color:var(--fg);font-size:13px;padding:6px 12px;border-radius:999px}
+.periods button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg);font-weight:700}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tile{background:var(--fill);border-radius:12px;padding:12px}
+.tile b{display:block;font-size:24px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.tile span{font-size:12px;color:var(--muted)}
+.stats h3{font-size:15px;font-weight:800;margin:0 0 8px}
+.chart{display:flex;align-items:flex-end;gap:2px;height:110px;border-bottom:1px solid var(--line);padding-top:6px}
+.chart .col{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;height:100%;position:relative}
+.chart .v{background:color-mix(in srgb,var(--accent) 30%,transparent);border-radius:2px 2px 0 0}
+.chart .c{background:var(--accent);border-radius:2px 2px 0 0;position:absolute;left:25%;right:25%;bottom:0}
+.axis{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:12px;font-size:12px;color:var(--muted);margin-top:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.rank{display:flex;flex-direction:column}
+.rank > div{display:grid;grid-template-columns:20px 40px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.rank.noimg > div{grid-template-columns:20px minmax(0,1fr) auto}
+.rank em{font-style:normal;color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums;text-align:center}
+.rank img{width:40px;height:40px;object-fit:cover;object-position:50% 0;border-radius:6px;background:var(--fill)}
+.rank span{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank strong{font-size:14px;font-variant-numeric:tabular-nums}
+.muted{color:var(--muted);font-size:13px}
 .foot{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:12px}
 .foot button{background:none;border:0;color:var(--muted);font-size:12px;padding:6px 0;text-decoration:underline}
 .meter{height:4px;border-radius:2px;background:var(--fill);overflow:hidden;width:120px;display:inline-block;vertical-align:middle;margin-left:6px}
@@ -146,6 +170,7 @@ h1{font-size:34px;font-weight:800;letter-spacing:-.02em;margin:0;line-height:1.1
     <div class="seg" role="group" aria-label="보기">
       <button id="tabLooks" aria-pressed="true">코디</button>
       <button id="tabItems" aria-pressed="false">아이템</button>
+      <button id="tabStats" aria-pressed="false" hidden>통계</button>
     </div>
   </header>
   <div id="banner"></div>
@@ -254,6 +279,9 @@ function render(){
   $("banner").innerHTML = usingExamples() && loaded
     ? `<div class="banner"><span><b>예시 코디</b>를 보여주고 있어요. ${canEdit ? "사진을 추가하면 예시는 사라지고 내 코디만 남아요." : "곧 코디가 올라올 예정이에요."}</span>${canEdit ? '<button class="add" id="bannerAdd">첫 코디 올리기</button>' : ""}</div>` : "";
   const ba = $("bannerAdd"); if (ba) ba.onclick = () => $("fileInput").click();
+  $("tabStats").hidden = !canEdit;
+  if (tab === "stats" && !canEdit) setTab("looks");
+  if (tab === "stats"){ renderStats(); return; }
   $("main").innerHTML = tab === "looks" ? gridHTML() : itemsHTML();
 }
 
@@ -285,14 +313,16 @@ function itemsHTML(){
   let h = `<div class="items">`;
   for (const {t, li, n} of map.values()){
     const u = safeUrl(t.url);
-    h += `<a class="item" ${u ? `href="${esc(u)}" target="_blank" rel="noopener noreferrer"` : ""}><img src="${esc(thumbOf(looks[li]))}" alt="" loading="lazy"><div style="min-width:0"><b>${esc(t.brand)}</b><span>${esc(t.name)}</span><em>코디 ${n}개에 사용</em></div><span class="shop">${esc(shopLabel(t.shop))}</span></a>`;
+    h += `<a class="item" data-li="${li}" data-tid="${esc(t.id)}" ${u ? `href="${esc(u)}" target="_blank" rel="noopener noreferrer"` : ""}><img src="${esc(thumbOf(looks[li]))}" alt="" loading="lazy"><div style="min-width:0"><b>${esc(t.brand)}</b><span>${esc(t.name)}</span><em>코디 ${n}개에 사용</em></div><span class="shop">${esc(shopLabel(t.shop))}</span></a>`;
   }
   return h + `</div>`;
 }
 
 $("main").addEventListener("click", e => { const c = e.target.closest(".cell"); if (c) openViewer(+c.dataset.i); });
-$("tabLooks").onclick = () => { tab = "looks"; $("tabLooks").setAttribute("aria-pressed","true"); $("tabItems").setAttribute("aria-pressed","false"); render(); };
-$("tabItems").onclick = () => { tab = "items"; $("tabItems").setAttribute("aria-pressed","true"); $("tabLooks").setAttribute("aria-pressed","false"); render(); };
+function setTab(t){ tab = t; [["looks","tabLooks"],["items","tabItems"],["stats","tabStats"]].forEach(([k,id]) => $(id).setAttribute("aria-pressed", String(k === t))); }
+$("tabLooks").onclick = () => { setTab("looks"); render(); };
+$("tabItems").onclick = () => { setTab("items"); render(); };
+$("tabStats").onclick = () => { setTab("stats"); render(); };
 
 /* ---------- Viewer ---------- */
 const viewer = $("viewer"), stage = $("stage"), track = $("track");
@@ -303,6 +333,7 @@ function openViewer(i, edit=false){
   document.body.style.overflow = "hidden";
   renderViewer();
   try { if (!looks[i].example) history.replaceState(null, "", "#" + looks[i].id); } catch {}
+  logView(looks[i]);
 }
 function closeViewer(){ const was = V.editing; V.open = false; V.editing = false; viewer.hidden = true; document.body.style.overflow = ""; try { history.replaceState(null, "", location.pathname + location.search); } catch {} closeSheet(); }
 
@@ -365,7 +396,7 @@ function go(dir){
   if (ni < 0 || ni >= looks.length){ snap(); return; }
   track.style.transition = "transform .28s cubic-bezier(.2,.8,.2,1)";
   track.style.transform = `translateX(${dir > 0 ? -200 : 0}%)`;
-  const done = () => { V.i = ni; renderViewer(); };
+  const done = () => { V.i = ni; renderViewer(); logView(looks[ni]); };
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) done();
   else track.addEventListener("transitionend", done, {once:true});
 }
@@ -419,13 +450,19 @@ track.addEventListener("click", e => {
   const b = e.target.closest(".bubble");
   if (!b) return;
   if (V.editing){ e.preventDefault(); openTagSheet(b.dataset.id); return; }
-  if (!b.getAttribute("href")){ e.preventDefault(); toast("판매 링크가 아직 없어요"); }
+  if (!b.getAttribute("href")){ e.preventDefault(); toast("판매 링크가 아직 없어요"); return; }
+  logClick(looks[V.i], b.dataset.id);
 });
 $("vItems").addEventListener("click", e => {
   const c = e.target.closest(".chip:not(.add-chip)");
   if (!c) return;
   if (V.editing){ e.preventDefault(); openTagSheet(c.dataset.id); return; }
-  if (!c.getAttribute("href")){ e.preventDefault(); toast("판매 링크가 아직 없어요"); }
+  if (!c.getAttribute("href")){ e.preventDefault(); toast("판매 링크가 아직 없어요"); return; }
+  logClick(looks[V.i], c.dataset.id);
+});
+$("main").addEventListener("click", e => {
+  const a = e.target.closest("a.item[href]");
+  if (a) logClick(looks[+a.dataset.li], a.dataset.tid);
 });
 $("tagBtn").onclick = () => viewer.classList.toggle("show-tags");
 $("vClose").onclick = closeViewer;
@@ -580,8 +617,75 @@ sb.auth.onAuthStateChange((_e, session) => {
   if (was !== canEdit){ if (!canEdit && V.editing){ V.editing = false; } render(); if (V.open) renderViewer(); }
 });
 
+/* ---------- Analytics ---------- */
+let authKnown = false;
+const visitorId = (() => {
+  try { let v = localStorage.getItem("closet-vid"); if (!v){ v = (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2)); localStorage.setItem("closet-vid", v); } return v; }
+  catch { return "anon-" + Math.random().toString(36).slice(2); }
+})();
+const viewed = new Set();
+function logEvent(row){
+  if (canEdit || !authKnown) return; // 내 방문·클릭은 세지 않아요
+  sb.from("events").insert({ visitor: visitorId, ...row }).then(() => {}, () => {});
+}
+function logView(l){ if (!l || l.example || viewed.has(l.id)) return; viewed.add(l.id); logEvent({ type:"view", look_id:l.id }); }
+function logClick(l, tid){
+  if (!l || l.example) return;
+  const t = (l.tags||[]).find(x => x.id === tid); if (!t) return;
+  logEvent({ type:"click", look_id:l.id, item:`${t.brand} ${t.name}`.trim().slice(0,200), shop:(t.shop||"etc").slice(0,20) });
+}
+function logVisit(){
+  try { if (sessionStorage.getItem("closet-visit")) return; sessionStorage.setItem("closet-visit", "1"); } catch {}
+  logEvent({ type:"visit" });
+}
+
+let statDays = 7, statCache = {};
+async function renderStats(){
+  const key = statDays;
+  $("main").innerHTML = `<div class="stats"><div class="periods" id="periods">${[[1,"오늘"],[7,"7일"],[30,"30일"],[90,"90일"]].map(([d,l]) => `<button data-d="${d}" aria-pressed="${d===statDays}">${l}</button>`).join("")}</div><div id="statBody"><p class="muted">통계를 불러오는 중…</p></div></div>`;
+  $("periods").onclick = e => { const b = e.target.closest("button"); if (!b) return; statDays = +b.dataset.d; renderStats(); };
+  let d = statCache[key];
+  if (!d){
+    const { data, error } = await sb.rpc("closet_stats", { days: key });
+    if (error){ if (tab === "stats") $("statBody").innerHTML = `<p class="muted">통계를 불러오지 못했어요. Supabase에 통계 설정 코드를 실행했는지 확인해 주세요.</p>`; return; }
+    d = statCache[key] = data;
+    setTimeout(() => { delete statCache[key]; }, 60000);
+  }
+  if (tab !== "stats" || statDays !== key) return;
+  const T = d.totals || {}, num = n => Number(n||0).toLocaleString("ko-KR");
+  const byId = new Map(real.map(l => [l.id, l]));
+  // fill every day in range so gaps show as empty
+  const daily = new Map((d.daily||[]).map(x => [x.day, x]));
+  const days = [];
+  for (let i = key - 1; i >= 0; i--){
+    const dt = new Date(Date.now() + 9*3600e3 - i*864e5).toISOString().slice(0,10);
+    days.push(daily.get(dt) || { day: dt, visitors: 0, views: 0, clicks: 0 });
+  }
+  const max = Math.max(1, ...days.map(x => Math.max(x.visitors, x.clicks)));
+  const md = s => `${+s.slice(5,7)}/${+s.slice(8,10)}`;
+  const chart = key > 1 ? `<section><h3>날짜별 추이</h3><div class="chart">${days.map(x => `<div class="col" title="${md(x.day)} 방문자 ${x.visitors} · 클릭 ${x.clicks}"><div class="v" style="height:${x.visitors/max*100}%"></div><div class="c" style="height:${x.clicks/max*100}%"></div></div>`).join("")}</div><div class="axis"><span>${md(days[0].day)}</span><span>${md(days[days.length-1].day)}</span></div><div class="legend"><span><i style="background:color-mix(in srgb,var(--accent) 30%,transparent)"></i>방문자</span><span><i style="background:var(--accent)"></i>링크 클릭</span></div></section>` : "";
+  const items = (d.topItems||[]).map((x,i) => `<div><em>${i+1}</em><span>${esc(x.item)} <small class="muted">${esc(shopLabel(x.shop))}</small></span><strong>${num(x.n)}</strong></div>`).join("");
+  const looksTop = (d.topLooks||[]).map((x,i) => { const l = byId.get(x.look_id); return `<div><em>${i+1}</em>${l ? `<img src="${esc(thumbOf(l))}" alt="" loading="lazy">` : "<span></span>"}<span>${l ? esc((l.note || "") || l.date) : "삭제된 코디"}</span><strong>${num(x.n)}</strong></div>`; }).join("");
+  const shops = (d.byShop||[]).map(x => `<div><em></em><span>${esc(shopLabel(x.shop))}</span><strong>${num(x.n)}</strong></div>`).join("");
+  $("statBody").innerHTML = `
+    <section class="tiles">
+      <div class="tile"><b>${num(T.visitors)}</b><span>방문자</span></div>
+      <div class="tile"><b>${num(T.views)}</b><span>코디 조회</span></div>
+      <div class="tile"><b>${num(T.clicks)}</b><span>링크 클릭</span></div>
+    </section>
+    ${chart}
+    <section><h3>많이 클릭된 아이템</h3>${items ? `<div class="rank noimg">${items}</div>` : `<p class="muted">아직 클릭 기록이 없어요.</p>`}</section>
+    <section><h3>판매처별 클릭</h3>${shops ? `<div class="rank noimg">${shops}</div>` : `<p class="muted">아직 클릭 기록이 없어요.</p>`}</section>
+    <section><h3>많이 본 코디</h3>${looksTop ? `<div class="rank">${looksTop}</div>` : `<p class="muted">아직 조회 기록이 없어요.</p>`}</section>
+    <p class="muted">내가 관리자로 로그인한 상태의 방문과 클릭은 세지 않아요. 같은 사람이 같은 날 여러 번 들어와도 방문자는 1명으로 세요.</p>`;
+}
+
 /* ---------- Boot ---------- */
 render();
+sb.auth.getSession().then(({ data }) => {
+  canEdit = !!data.session && (data.session.user?.email || "").toLowerCase() === OWNER_EMAIL;
+  authKnown = true; logVisit(); render();
+}, () => { authKnown = true; logVisit(); });
 (async () => {
   const rows = [];
   for (let from = 0; ; from += 1000){
