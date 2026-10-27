@@ -147,6 +147,37 @@ h1{font-size:34px;font-weight:800;letter-spacing:-.02em;margin:0;line-height:1.1
 .rank span{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rank strong{font-size:14px;font-variant-numeric:tabular-nums}
 .muted{color:var(--muted);font-size:13px}
+.search{position:relative;margin-top:10px}
+.search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--muted);pointer-events:none}
+.search input{width:100%;box-sizing:border-box;border:0;background:var(--fill);border-radius:10px;padding:9px 12px 9px 34px;font-size:16px;color:var(--fg);-webkit-appearance:none;appearance:none}
+.search input::placeholder{color:var(--muted)}
+.albums{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 12px;margin-top:16px}
+.album{border:0;background:none;padding:0;text-align:left;color:inherit;min-width:0;display:flex;flex-direction:column;gap:2px}
+.album .cv{display:block;aspect-ratio:3/4;max-width:100%;border-radius:10px;overflow:hidden;background:var(--fill)}
+.album .cv.m{display:grid;grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr;gap:2px}
+.album .cv img{width:100%;height:100%;object-fit:cover;object-position:50% 0;display:block}
+.album .cv.m img:first-child{grid-row:1 / span 2}
+.album .an{font-size:14px;font-weight:700;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.album .am{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.album-head{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+.linkbtn{background:none;border:0;color:var(--accent);font-size:15px;font-weight:600;padding:6px 0}
+.album-title{font-size:24px;font-weight:800;letter-spacing:-.02em;margin:2px 0 2px;text-wrap:balance}
+.album-meta{margin:0 0 12px}
+.month .meta{font-size:12px;color:var(--muted);margin:-6px 0 8px;font-variant-numeric:tabular-nums}
+.result{margin:14px 0 10px}
+.sel-btn{font-size:14px;padding:6px 14px}
+.ck{position:absolute;right:6px;bottom:6px;width:22px;height:22px;box-sizing:border-box;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.25);display:grid;place-items:center;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.ck svg{width:12px;height:12px;opacity:0}
+.cell.sel .ck{background:var(--accent)}
+.cell.sel .ck svg{opacity:1}
+.cell.sel img{opacity:.7}
+.selbar{position:fixed;z-index:7;left:0;right:0;bottom:0;max-width:520px;margin:0 auto;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:10px;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--line);padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.selbar > span{font-size:14px;font-weight:600;white-space:nowrap}
+.selbar div{display:flex;gap:8px}
+.selbar button{border:0;border-radius:999px;padding:9px 14px;font-size:14px;font-weight:700;background:var(--accent);color:#fff;white-space:nowrap}
+.selbar button.danger{background:var(--fill);color:var(--danger)}
+.selbar button:disabled{opacity:.4}
+.sheet-desc{margin:-6px 0 14px;text-align:center;font-size:13px;color:var(--v-muted)}
 .foot{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:12px}
 .foot button{background:none;border:0;color:var(--muted);font-size:12px;padding:6px 0;text-decoration:underline}
 .meter{height:4px;border-radius:2px;background:var(--fill);overflow:hidden;width:120px;display:inline-block;vertical-align:middle;margin-left:6px}
@@ -165,13 +196,16 @@ h1{font-size:34px;font-weight:800;letter-spacing:-.02em;margin:0;line-height:1.1
         <h1>코디</h1>
         <div class="sub" id="sub">불러오는 중…</div>
       </div>
+      <button class="add sel-btn" id="selBtn" hidden>선택</button>
 
     </div>
     <div class="seg" role="group" aria-label="보기">
-      <button id="tabLooks" aria-pressed="true">코디</button>
+      <button id="tabVideos" aria-pressed="true">영상</button>
+      <button id="tabLooks" aria-pressed="false">전체</button>
       <button id="tabItems" aria-pressed="false">아이템</button>
       <button id="tabStats" aria-pressed="false" hidden>통계</button>
     </div>
+    <div class="search" id="searchBox"><svg viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5.2" stroke="currentColor" stroke-width="1.8"/><path d="m11 11 3.5 3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><input id="q" type="search" placeholder="브랜드, 제품명, 영상 제목 검색" autocomplete="off" enterkeyhint="search" aria-label="코디 검색"></div>
   </header>
   <div id="banner"></div>
   <main id="main"></main>
@@ -179,6 +213,7 @@ h1{font-size:34px;font-weight:800;letter-spacing:-.02em;margin:0;line-height:1.1
 </div>
 </div>
 <button class="fab" id="addBtn" hidden aria-label="코디 추가"><svg viewBox="0 0 24 24" fill="none"><path d="M12 4v16M4 12h16" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></button>
+<div class="selbar" id="selBar" hidden><span id="selCount">코디를 선택하세요</span><div><button id="selGroup">영상으로 묶기</button><button id="selDel" class="danger">삭제</button></div></div>
 <input type="file" id="fileInput" accept="image/*" multiple hidden>
 
 <div id="viewer" hidden class="show-tags">
@@ -248,81 +283,177 @@ const EX_ITEMS = [
 const SPOTS = [[50,30],[50,64],[42,89],[81,59]];
 const SHOP_HOME = {ably:"https://m.a-bly.com/",zigzag:"https://zigzag.kr/",musinsa:"https://www.musinsa.com/","29cm":"https://www.29cm.co.kr/",wconcept:"https://www.wconcept.co.kr/",etc:"https://www.google.com/"};
 const examples = EX.map(([date,note,c],i) => ({
-  id:"ex"+i, example:true, src:flatlay(c), w:600, h:800, date, note,
+  id:"ex"+i, example:true, src:flatlay(c), w:600, h:800, date, note, video: i < 3 ? "가을 데일리룩 모음" : "간절기 코디 하울", createdAt: i,
   tags: EX_ITEMS[i].map(([brand,name,shop],j) => ({id:"t"+j, x:SPOTS[j][0], y:SPOTS[j][1], brand, name, shop, url:SHOP_HOME[shop]}))
 }));
 
 /* ---------- State ---------- */
 let canEdit = false, loaded = false;
 let real = [];
-let looks = examples;
-let tab = "looks";
+let all = [];      // every look, in album order
+let looks = [];    // the list the grid and viewer use right now
+let tab = "videos", album = null, query = "";
+let selecting = false, delArmed = false;
+const selected = new Set();
 const V = { open:false, i:0, editing:false };
+const CHECK = '<svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2 5 8.5l4.5-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 const pub = p => sb.storage.from(BUCKET).getPublicUrl(p).data.publicUrl;
 const srcOf = l => l.example ? l.src : pub(l.photo);
 const thumbOf = l => l.example ? l.src : pub(l.thumb);
-const fromRow = r => ({ id:r.id, photo:r.photo, thumb:r.thumb, w:r.w, h:r.h, bytes:r.bytes||0, date:r.date, note:r.note||"", tags:r.tags||[], createdAt:Date.parse(r.created_at)||0 });
+const fromRow = r => ({ id:r.id, photo:r.photo, thumb:r.thumb, w:r.w, h:r.h, bytes:r.bytes||0, date:r.date, note:r.note||"", video:r.video||"", tags:r.tags||[], createdAt:Date.parse(r.created_at)||0 });
 const usingExamples = () => real.length === 0;
+const vkey = l => (l.video || "").trim();
+const vname = k => k || "기타 코디";
+const fmtDate = s => { if (!s) return ""; const [y,m,d] = s.split("-"); return (+y !== new Date().getFullYear() ? `${y}년 ` : "") + `${+m}월 ${+d}일`; };
+const titles = () => groupVideos(real).filter(g => g.k).map(g => g.k);
 
-function sortLooks(arr){ return arr.slice().sort((a,b) => (b.date||"").localeCompare(a.date||"") || (b.createdAt||0)-(a.createdAt||0)); }
+function groupVideos(arr){
+  const m = new Map();
+  for (const l of arr){ const k = vkey(l); if (!m.has(k)) m.set(k, []); m.get(k).push(l); }
+  const groups = [...m].map(([k, ls]) => {
+    ls = ls.slice().sort((a,b) => (a.createdAt||0) - (b.createdAt||0) || (a.date||"").localeCompare(b.date||""));
+    const date = ls.reduce((x,l) => (l.date||"") > x ? l.date : x, "");
+    const last = date + String(Math.max(...ls.map(l => l.createdAt||0))).padStart(15, "0");
+    return { k, ls, date, last };
+  });
+  groups.sort((a,b) => (a.k === "") - (b.k === "") || b.last.localeCompare(a.last));
+  return groups;
+}
+function hay(l){ return [l.video, l.note, l.date, fmtDate(l.date), ...(l.tags||[]).flatMap(t => [t.brand, t.name, shopLabel(t.shop)])].join(" ").toLowerCase(); }
 
 /* ---------- Grid & items ---------- */
 function render(){
-  looks = usingExamples() ? (loaded ? examples : []) : sortLooks(real);
-  const nTags = looks.reduce((n,l) => n + (l.tags||[]).length, 0);
-  $("sub").textContent = loaded ? `코디 ${looks.length}개 · 태그된 아이템 ${nTags}개` + (usingExamples() ? " (예시)" : "") : "불러오는 중…";
+  const base = usingExamples() ? (loaded ? examples : []) : real;
+  const groups = groupVideos(base);
+  all = groups.flatMap(g => g.ls);
+  if (album !== null && !groups.some(g => g.k === album)) album = null;
+  const q = query.trim().toLowerCase();
+  const nTags = all.reduce((n,l) => n + (l.tags||[]).length, 0);
+  $("sub").textContent = loaded ? `영상 ${groups.filter(g => g.k).length}개 · 코디 ${all.length}개 · 아이템 ${nTags}개` + (usingExamples() ? " (예시)" : "") : "불러오는 중…";
   const used = real.reduce((n,l) => n + (l.bytes||0), 0), pct = used / QUOTA * 100;
   $("usage").innerHTML = canEdit ? `저장 공간 ${(used/1048576).toFixed(0)}MB / 1GB (${pct.toFixed(1)}%)<span class="meter ${pct >= 80 ? "warn" : ""}"><i style="width:${Math.min(100,pct).toFixed(1)}%"></i></span>${pct >= 80 ? " · 곧 가득 차요. 오래된 코디를 정리해 주세요." : ""}` : "";
   $("adminBtn").textContent = canEdit ? "로그아웃" : "관리자 로그인";
-  $("addBtn").hidden = !canEdit;
   $("banner").innerHTML = usingExamples() && loaded
     ? `<div class="banner"><span><b>예시 코디</b>를 보여주고 있어요. ${canEdit ? "사진을 추가하면 예시는 사라지고 내 코디만 남아요." : "곧 코디가 올라올 예정이에요."}</span>${canEdit ? '<button class="add" id="bannerAdd">첫 코디 올리기</button>' : ""}</div>` : "";
   const ba = $("bannerAdd"); if (ba) ba.onclick = () => $("fileInput").click();
   $("tabStats").hidden = !canEdit;
-  if (tab === "stats" && !canEdit) setTab("looks");
+  if (tab === "stats" && !canEdit) setTab("videos");
+  $("searchBox").hidden = tab === "stats";
+  const gridShown = tab !== "stats" && (tab !== "items") && (q || tab === "looks" || album !== null);
+  const canSelect = canEdit && !usingExamples() && gridShown;
+  if (!canSelect && selecting) exitSelect(false);
+  $("selBtn").hidden = !canSelect;
+  $("selBtn").textContent = selecting ? "완료" : "선택";
+  $("addBtn").hidden = !canEdit || selecting;
+  renderSelBar();
   if (tab === "stats"){ renderStats(); return; }
-  $("main").innerHTML = tab === "looks" ? gridHTML() : itemsHTML();
+  if (tab === "items"){ looks = all; $("main").innerHTML = itemsHTML(q); return; }
+  if (q){ looks = all.filter(l => hay(l).includes(q)); $("main").innerHTML = searchHTML(query.trim()); return; }
+  if (tab === "videos" && album === null){ looks = []; $("main").innerHTML = albumsHTML(groups); return; }
+  if (tab === "videos"){ const g = groups.find(g => g.k === album); looks = g.ls; $("main").innerHTML = albumHTML(g); return; }
+  looks = all; $("main").innerHTML = allHTML(groups);
 }
 
-function gridHTML(){
-  if (!looks.length) return loaded ? `<div class="empty">아직 코디가 없어요</div>` : "";
-  const groups = new Map();
-  looks.forEach((l,i) => { const k = (l.date||"").slice(0,7); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(i); });
-  let h = "";
-  for (const [k, idxs] of groups){
-    const [y,m] = k.split("-");
-    h += `<section class="month"><h2>${y ? `${y}년 ${+m}월` : "날짜 없음"}<small>${idxs.length}</small></h2><div class="grid">`;
-    for (const i of idxs){
-      const l = looks[i], n = (l.tags||[]).length;
-      h += `<button class="cell" data-i="${i}" aria-label="${esc(l.date)} ${esc(l.note)} 열기"><img src="${esc(thumbOf(l))}" alt="" loading="lazy">${n ? `<span class="badge">${TAG_ICON}${n}</span>` : ""}</button>`;
-    }
-    h += `</div></section>`;
-  }
-  return h;
+function cellHTML(l, i){
+  const n = (l.tags||[]).length, s = selected.has(l.id);
+  return `<button class="cell${s ? " sel" : ""}" data-i="${i}" aria-label="${esc(vname(vkey(l)))} ${esc(fmtDate(l.date))} ${selecting ? "선택" : "열기"}"${selecting ? ` aria-pressed="${s}"` : ""}><img src="${esc(thumbOf(l))}" alt="" loading="lazy">${n && !selecting ? `<span class="badge">${TAG_ICON}${n}</span>` : ""}${selecting ? `<span class="ck">${CHECK}</span>` : ""}</button>`;
+}
+const emptyHTML = () => loaded ? `<div class="empty">아직 코디가 없어요</div>` : "";
+
+function albumsHTML(groups){
+  if (!groups.length) return emptyHTML();
+  return `<div class="albums">${groups.map(g => {
+    const p = g.ls.slice(0, 3);
+    const cv = p.length >= 3 ? `<span class="cv m">${p.map(l => `<img src="${esc(thumbOf(l))}" alt="" loading="lazy">`).join("")}</span>` : `<span class="cv"><img src="${esc(thumbOf(p[0]))}" alt="" loading="lazy"></span>`;
+    return `<button class="album" data-k="${esc(g.k)}">${cv}<span class="an">${esc(vname(g.k))}</span><span class="am">코디 ${g.ls.length}개 · ${esc(fmtDate(g.date))}</span></button>`;
+  }).join("")}</div>`;
+}
+function albumHTML(g){
+  return `<div class="album-head"><button class="linkbtn" id="backBtn">‹ 영상</button>${canEdit && g.k && !usingExamples() ? '<button class="linkbtn" id="renameBtn">이름 바꾸기</button>' : ""}</div>
+    <h2 class="album-title">${esc(vname(g.k))}</h2><p class="muted album-meta">코디 ${g.ls.length}개 · ${esc(fmtDate(g.date))}</p>
+    <div class="grid">${g.ls.map((l,i) => cellHTML(l, i)).join("")}</div>`;
+}
+function allHTML(groups){
+  if (!groups.length) return emptyHTML();
+  let i = 0;
+  return groups.map(g => `<section class="month"><h2>${esc(vname(g.k))}<small>${g.ls.length}</small></h2><p class="meta">${esc(fmtDate(g.date))}</p><div class="grid">${g.ls.map(l => cellHTML(l, i++)).join("")}</div></section>`).join("");
+}
+function searchHTML(q){
+  if (!looks.length) return `<p class="muted result">'${esc(q)}'에 맞는 코디가 없어요. 브랜드, 제품명, 영상 제목으로 검색해 보세요.</p>`;
+  return `<p class="muted result">'${esc(q)}' 검색 결과 ${looks.length}개</p><div class="grid">${looks.map((l,i) => cellHTML(l, i)).join("")}</div>`;
 }
 
-function itemsHTML(){
+function itemsHTML(q){
   const map = new Map();
-  looks.forEach((l,li) => (l.tags||[]).forEach(t => {
+  all.forEach(l => (l.tags||[]).forEach(t => {
+    if (q && !`${t.brand} ${t.name} ${shopLabel(t.shop)}`.toLowerCase().includes(q)) return;
     const key = safeUrl(t.url) || (t.brand + "|" + t.name);
-    if (!map.has(key)) map.set(key, {t, li, n:0});
+    if (!map.has(key)) map.set(key, {t, l, n:0});
     map.get(key).n++;
   }));
-  if (!map.size) return `<div class="empty">태그된 아이템이 아직 없어요</div>`;
+  if (!map.size) return q ? `<p class="muted result">'${esc(query.trim())}'에 맞는 아이템이 없어요.</p>` : `<div class="empty">태그된 아이템이 아직 없어요</div>`;
   let h = `<div class="items">`;
-  for (const {t, li, n} of map.values()){
+  for (const {t, l, n} of map.values()){
     const u = safeUrl(t.url);
-    h += `<a class="item" data-li="${li}" data-tid="${esc(t.id)}" ${u ? `href="${esc(u)}" target="_blank" rel="noopener noreferrer"` : ""}><img src="${esc(thumbOf(looks[li]))}" alt="" loading="lazy"><div style="min-width:0"><b>${esc(t.brand)}</b><span>${esc(t.name)}</span><em>코디 ${n}개에 사용</em></div><span class="shop">${esc(shopLabel(t.shop))}</span></a>`;
+    h += `<a class="item" data-lid="${esc(l.id)}" data-tid="${esc(t.id)}" ${u ? `href="${esc(u)}" target="_blank" rel="noopener noreferrer"` : ""}><img src="${esc(thumbOf(l))}" alt="" loading="lazy"><div style="min-width:0"><b>${esc(t.brand)}</b><span>${esc(t.name)}</span><em>코디 ${n}개에 사용</em></div><span class="shop">${esc(shopLabel(t.shop))}</span></a>`;
   }
   return h + `</div>`;
 }
 
-$("main").addEventListener("click", e => { const c = e.target.closest(".cell"); if (c) openViewer(+c.dataset.i); });
-function setTab(t){ tab = t; [["looks","tabLooks"],["items","tabItems"],["stats","tabStats"]].forEach(([k,id]) => $(id).setAttribute("aria-pressed", String(k === t))); }
-$("tabLooks").onclick = () => { setTab("looks"); render(); };
-$("tabItems").onclick = () => { setTab("items"); render(); };
-$("tabStats").onclick = () => { setTab("stats"); render(); };
+$("main").addEventListener("click", e => {
+  const c = e.target.closest(".cell");
+  if (c){
+    const l = looks[+c.dataset.i]; if (!l) return;
+    if (selecting){
+      if (selected.has(l.id)) selected.delete(l.id); else selected.add(l.id);
+      const s = selected.has(l.id); c.classList.toggle("sel", s); c.setAttribute("aria-pressed", String(s));
+      delArmed = false; renderSelBar(); return;
+    }
+    openViewer(+c.dataset.i); return;
+  }
+  const a = e.target.closest(".album");
+  if (a){ album = a.dataset.k; render(); scrollTo(0, 0); return; }
+  if (e.target.closest("#backBtn")){ album = null; exitSelect(false); render(); return; }
+  if (e.target.closest("#renameBtn")) openRenameSheet(album);
+});
+function setTab(t){ tab = t; [["videos","tabVideos"],["looks","tabLooks"],["items","tabItems"],["stats","tabStats"]].forEach(([k,id]) => $(id).setAttribute("aria-pressed", String(k === t))); }
+$("tabVideos").onclick = () => { if (tab === "videos") album = null; setTab("videos"); exitSelect(false); render(); };
+$("tabLooks").onclick = () => { setTab("looks"); exitSelect(false); render(); };
+$("tabItems").onclick = () => { setTab("items"); exitSelect(false); render(); };
+$("tabStats").onclick = () => { setTab("stats"); exitSelect(false); render(); };
+$("q").addEventListener("input", e => { query = e.target.value; render(); });
+
+/* ---------- Select mode (owner only) ---------- */
+function exitSelect(rerender = true){ selecting = false; selected.clear(); delArmed = false; if (rerender) render(); }
+function renderSelBar(){
+  $("selBar").hidden = !selecting;
+  if (!selecting) return;
+  const n = selected.size;
+  $("selCount").textContent = n ? `${n}개 선택됨` : "코디를 선택하세요";
+  $("selGroup").disabled = $("selDel").disabled = !n;
+  $("selDel").textContent = delArmed ? "한 번 더 누르면 삭제" : "삭제";
+}
+$("selBtn").onclick = () => { if (selecting) exitSelect(); else { selecting = true; render(); } };
+$("selGroup").onclick = () => {
+  const ids = [...selected];
+  openVideoSheet({ title: `코디 ${ids.length}개를 영상으로 묶기`, value: album || "", required: true, okLabel: "묶기", onOk: async v => {
+    const { error } = await sb.from("looks").update({ video: v }).in("id", ids);
+    if (error){ toast("묶지 못했어요. 로그인 상태를 확인해 주세요."); return false; }
+    real.forEach(l => { if (selected.has(l.id)) l.video = v; });
+    exitSelect(false); setTab("videos"); album = v; render(); scrollTo(0, 0);
+    toast(`'${v}'에 코디 ${ids.length}개를 묶었어요`);
+  }});
+};
+$("selDel").onclick = async () => {
+  if (!delArmed){ delArmed = true; renderSelBar(); return; }
+  const ids = [...selected], gone = real.filter(l => selected.has(l.id));
+  const { error } = await sb.from("looks").delete().in("id", ids);
+  if (error){ toast("삭제하지 못했어요. 잠시 뒤 다시 시도해 주세요."); return; }
+  sb.storage.from(BUCKET).remove(gone.flatMap(l => [l.photo, l.thumb])).catch(() => {});
+  real = real.filter(l => !selected.has(l.id));
+  exitSelect(); toast(`코디 ${ids.length}개를 삭제했어요`);
+};
 
 /* ---------- Viewer ---------- */
 const viewer = $("viewer"), stage = $("stage"), track = $("track");
@@ -353,9 +484,8 @@ function renderViewer(){
   if (V.editing) viewer.classList.add("show-tags");
   track.style.transition = "none"; track.style.transform = "translateX(-100%)";
   track.innerHTML = slideHTML(looks[V.i-1]) + slideHTML(l) + slideHTML(looks[V.i+1]);
-  const d = new Date((l.date||"") + "T00:00:00");
-  $("vDate").textContent = isNaN(d) ? "날짜 없음" : `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일`;
-  $("vNote").textContent = (l.example ? "예시 · " : "") + (l.note || "");
+  $("vDate").textContent = vkey(l) || fmtDate(l.date) || "코디";
+  $("vNote").textContent = [l.example ? "예시" : "", vkey(l) ? fmtDate(l.date) : "", l.note].filter(Boolean).join(" · ");
   $("vEdit").hidden = !(canEdit && !l.example);
   $("vEdit").textContent = V.editing ? "완료" : "편집";
   $("vHint").hidden = !V.editing;
@@ -366,7 +496,7 @@ function renderViewer(){
     return `<a class="chip" ${u && !V.editing ? `href="${esc(u)}" target="_blank" rel="noopener noreferrer"` : 'role="button" tabindex="0"'} data-id="${esc(t.id)}"><b>${esc(t.brand)} · ${esc(shopLabel(t.shop))}</b><span>${esc(t.name)}</span></a>`;
   }).join("");
   $("vItems").innerHTML = V.editing
-    ? items + `<button class="chip add-chip" id="metaBtn">날짜·메모 / 삭제</button>`
+    ? items + `<button class="chip add-chip" id="metaBtn">영상·날짜·메모 / 삭제</button>`
     : (items || `<span class="v-empty">태그된 아이템이 없어요</span>`);
   const mb = $("metaBtn"); if (mb) mb.onclick = openMetaSheet;
   layout();
@@ -462,7 +592,7 @@ $("vItems").addEventListener("click", e => {
 });
 $("main").addEventListener("click", e => {
   const a = e.target.closest("a.item[href]");
-  if (a) logClick(looks[+a.dataset.li], a.dataset.tid);
+  if (a) logClick(all.find(l => l.id === a.dataset.lid), a.dataset.tid);
 });
 $("tagBtn").onclick = () => viewer.classList.toggle("show-tags");
 $("vClose").onclick = closeViewer;
@@ -479,6 +609,37 @@ function closeSheet(){ $("sheetHost").innerHTML = ""; }
 function sheet(html){
   $("sheetHost").innerHTML = `<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>${html}</div></div>`;
   $("scrim").addEventListener("click", e => { if (e.target.id === "scrim") closeSheet(); });
+}
+
+function openVideoSheet(o){
+  const recent = titles().slice(0, 6);
+  sheet(`<h3>${esc(o.title)}</h3>${o.desc ? `<p class="sheet-desc">${esc(o.desc)}</p>` : ""}
+    <div class="field"><label for="vTitle">영상 제목</label><input id="vTitle" value="${esc(o.value || "")}" placeholder="예: 10월 겨울 아우터 하울" maxlength="60" autocomplete="off"></div>
+    ${recent.length ? `<div class="field"><label>최근 영상에 넣기</label><div class="shops" id="vRecent">${recent.map(k => `<button type="button" data-k="${esc(k)}">${esc(k)}</button>`).join("")}</div></div>` : ""}
+    <div class="err" id="vErr"></div>
+    <div class="row"><button class="btn-s" id="vSkip">${esc(o.skipLabel || "취소")}</button><button class="btn-p" id="vOk">${esc(o.okLabel)}</button></div>`);
+  if ($("vRecent")) $("vRecent").onclick = e => { const b = e.target.closest("button"); if (!b) return; $("vTitle").value = b.dataset.k; $("vRecent").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); };
+  $("vSkip").onclick = () => { closeSheet(); if (o.onSkip) o.onSkip(); };
+  const ok = async () => {
+    const v = $("vTitle").value.trim();
+    if (!v && o.required){ $("vErr").textContent = "영상 제목을 입력해 주세요."; return; }
+    $("vOk").disabled = true;
+    const r = await o.onOk(v);
+    if (r === false){ if ($("vOk")) $("vOk").disabled = false; } else closeSheet();
+  };
+  $("vOk").onclick = ok;
+  $("vTitle").addEventListener("keydown", e => { if (e.key === "Enter") ok(); });
+  setTimeout(() => $("vTitle")?.focus(), 250);
+}
+function openRenameSheet(k){
+  if (!k) return;
+  openVideoSheet({ title: "영상 이름 바꾸기", desc: "이미 있는 영상 이름을 고르면 두 영상이 하나로 합쳐져요.", value: k, required: true, okLabel: "저장", onOk: async v => {
+    if (v === k) return;
+    const { error } = await sb.from("looks").update({ video: v }).eq("video", k);
+    if (error){ toast("저장하지 못했어요. 로그인 상태를 확인해 주세요."); return false; }
+    real.forEach(l => { if (vkey(l) === k) l.video = v; });
+    album = v; render(); toast("영상 이름을 바꿨어요");
+  }});
 }
 
 function openTagSheet(tagId, x, y){
@@ -520,14 +681,17 @@ async function saveTags(l, tags){
 function openMetaSheet(){
   const l = looks[V.i]; if (!l || l.example) return;
   sheet(`<h3>코디 정보</h3>
+    <div class="field"><label for="mVideo">영상</label><input id="mVideo" list="vList" value="${esc(l.video)}" placeholder="영상 제목 (비우면 기타 코디)" maxlength="60" autocomplete="off"><datalist id="vList">${titles().map(t => `<option value="${esc(t)}">`).join("")}</datalist></div>
     <div class="field"><label for="mDate">날짜</label><input id="mDate" type="date" value="${esc(l.date)}"></div>
     <div class="field"><label for="mNote">메모</label><input id="mNote" value="${esc(l.note)}" placeholder="예: 가을 출근룩" maxlength="60"></div>
     <div class="row"><button class="btn-d" id="mDel">코디 삭제</button><button class="btn-p" id="mSave">저장</button></div>`);
   $("mSave").onclick = async () => {
-    const date = $("mDate").value || l.date, note = $("mNote").value.trim();
-    const { error } = await sb.from("looks").update({ date, note }).eq("id", l.id);
+    const date = $("mDate").value || l.date, note = $("mNote").value.trim(), video = $("mVideo").value.trim();
+    const { error } = await sb.from("looks").update({ date, note, video }).eq("id", l.id);
     if (error){ toast("저장하지 못했어요. 잠시 뒤 다시 시도해 주세요."); return; }
-    l.date = date; l.note = note; closeSheet(); render(); const ni = looks.findIndex(x => x.id === l.id); if (ni >= 0){ V.i = ni; renderViewer(); }
+    l.date = date; l.note = note; l.video = video; closeSheet(); render();
+    const ni = looks.findIndex(x => x.id === l.id);
+    if (ni >= 0){ V.i = ni; renderViewer(); } else { closeViewer(); toast(`'${vname(video)}'(으)로 옮겼어요`); }
   };
   let armed = false;
   $("mDel").onclick = async () => {
@@ -542,9 +706,13 @@ function openMetaSheet(){
 
 /* ---------- Upload ---------- */
 $("addBtn").onclick = () => $("fileInput").click();
-$("fileInput").onchange = async e => {
+$("fileInput").onchange = e => {
   const files = [...e.target.files]; e.target.value = "";
   if (!files.length || !canEdit) return;
+  openVideoSheet({ title: `코디 ${files.length}개 올리기`, desc: "같은 영상 제목끼리 하나의 앨범으로 묶여요.", value: tab === "videos" && album ? album : "", okLabel: "올리기", skipLabel: "영상 없이 올리기",
+    onOk: v => { uploadFiles(files, v); }, onSkip: () => uploadFiles(files, "") });
+};
+async function uploadFiles(files, video){
   const added = [];
   for (const [n, f] of files.entries()){
     toast(`올리는 중 ${n + 1} / ${files.length}`, 0);
@@ -557,18 +725,19 @@ $("fileInput").onchange = async e => {
       if (up2.error) throw up2.error;
       const d = new Date(f.lastModified || Date.now());
       const date = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-      const { data, error } = await sb.from("looks").insert({ photo: key + ".jpg", thumb: key + "_t.jpg", w: big.w, h: big.h, bytes: big.blob.size + small.blob.size, date, note: "", tags: [] }).select().single();
+      const { data, error } = await sb.from("looks").insert({ photo: key + ".jpg", thumb: key + "_t.jpg", w: big.w, h: big.h, bytes: big.blob.size + small.blob.size, date, note: "", video, tags: [] }).select().single();
       if (error) throw error;
       real.push(fromRow(data)); added.push(data.id);
     } catch (err) {
-      toast(err && /maximum|quota|exceed/i.test(err.message || "") ? "저장 공간이 가득 찼어요. 오래된 코디를 지운 뒤 다시 올려 주세요." : "사진을 올리지 못했어요. 로그인 상태와 인터넷 연결을 확인해 주세요.", 4000);
+      toast(err && /maximum|quota|exceed/i.test(err.message || "") ? "저장 공간이 가득 찼어요. 오래된 코디를 지운 뒤 다시 올려 주세요." : (err && /column|video/i.test(err.message || "") ? "영상 묶기 설정이 아직 안 돼 있어요. Supabase에 새 설정 코드를 실행해 주세요." : "사진을 올리지 못했어요. 로그인 상태와 인터넷 연결을 확인해 주세요."), 4500);
       break;
     }
   }
   if (!added.length) return;
-  render(); toast(`코디 ${added.length}개를 올렸어요`);
+  query = ""; $("q").value = ""; setTab("videos"); album = video; render(); scrollTo(0, 0);
+  toast(`코디 ${added.length}개를 올렸어요`);
   if (added.length === 1){ const i = looks.findIndex(l => l.id === added[0]); if (i >= 0){ openViewer(i, true); toast("아이템 위치를 탭해서 태그를 달아 주세요", 3500); } }
-};
+}
 function shrink(file, max, q){
   return new Promise((res, rej) => {
     const img = new Image(), url = URL.createObjectURL(file);
@@ -665,7 +834,7 @@ async function renderStats(){
   const md = s => `${+s.slice(5,7)}/${+s.slice(8,10)}`;
   const chart = key > 1 ? `<section><h3>날짜별 추이</h3><div class="chart">${days.map(x => `<div class="col" title="${md(x.day)} 방문자 ${x.visitors} · 클릭 ${x.clicks}"><div class="v" style="height:${x.visitors/max*100}%"></div><div class="c" style="height:${x.clicks/max*100}%"></div></div>`).join("")}</div><div class="axis"><span>${md(days[0].day)}</span><span>${md(days[days.length-1].day)}</span></div><div class="legend"><span><i style="background:color-mix(in srgb,var(--accent) 30%,transparent)"></i>방문자</span><span><i style="background:var(--accent)"></i>링크 클릭</span></div></section>` : "";
   const items = (d.topItems||[]).map((x,i) => `<div><em>${i+1}</em><span>${esc(x.item)} <small class="muted">${esc(shopLabel(x.shop))}</small></span><strong>${num(x.n)}</strong></div>`).join("");
-  const looksTop = (d.topLooks||[]).map((x,i) => { const l = byId.get(x.look_id); return `<div><em>${i+1}</em>${l ? `<img src="${esc(thumbOf(l))}" alt="" loading="lazy">` : "<span></span>"}<span>${l ? esc((l.note || "") || l.date) : "삭제된 코디"}</span><strong>${num(x.n)}</strong></div>`; }).join("");
+  const looksTop = (d.topLooks||[]).map((x,i) => { const l = byId.get(x.look_id); return `<div><em>${i+1}</em>${l ? `<img src="${esc(thumbOf(l))}" alt="" loading="lazy">` : "<span></span>"}<span>${l ? esc(vkey(l) || l.note || fmtDate(l.date)) : "삭제된 코디"}</span><strong>${num(x.n)}</strong></div>`; }).join("");
   const shops = (d.byShop||[]).map(x => `<div><em></em><span>${esc(shopLabel(x.shop))}</span><strong>${num(x.n)}</strong></div>`).join("");
   $("statBody").innerHTML = `
     <section class="tiles">
@@ -696,7 +865,8 @@ sb.auth.getSession().then(({ data }) => {
   }
   real = rows.map(fromRow); loaded = true; render();
   const id = decodeURIComponent(location.hash.slice(1));
-  if (id){ const i = looks.findIndex(l => l.id === id); if (i >= 0) openViewer(i); }
+  const hit = id && all.find(l => l.id === id);
+  if (hit){ album = vkey(hit); render(); const i = looks.findIndex(l => l.id === id); if (i >= 0) openViewer(i); }
 })();
 })();
 </script>
