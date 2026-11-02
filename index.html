@@ -396,7 +396,7 @@ function itemsHTML(q){
   let h = `<div class="items">`;
   for (const {t, l, n} of map.values()){
     const u = safeUrl(t.url);
-    h += `<a class="item" data-lid="${esc(l.id)}" data-tid="${esc(t.id)}" ${u ? `href="${esc(u)}" target="_blank" rel="noopener noreferrer"` : ""}><img src="${esc(thumbOf(l))}" alt="" loading="lazy"><div style="min-width:0"><b>${esc(t.brand)}</b><span>${esc(t.name)}</span><em>코디 ${n}개에 사용</em></div><span class="shop">${esc(shopLabel(t.shop))}</span></a>`;
+    h += `<a class="item" data-lid="${esc(l.id)}" data-tid="${esc(t.id)}" ${u ? `href="${esc(u)}" target="_blank" rel="noopener noreferrer"` : ""}><img src="${esc(thumbOf(l))}" alt="" loading="lazy"><div style="min-width:0"><span>${esc(t.brand || "브랜드")}</span><em>코디 ${n}개에 사용</em></div><span class="shop">${esc(shopLabel(t.shop))}에서 보기 ›</span></a>`;
   }
   return h + `</div>`;
 }
@@ -472,7 +472,7 @@ function slideHTML(l){
   if (!l) return `<div class="slide"></div>`;
   const tags = (l.tags||[]).map(t => {
     const u = safeUrl(t.url);
-    return `<div class="tag ${t.y > 58 ? "up" : "down"}" style="left:${t.x}%;top:${t.y}%" data-id="${esc(t.id)}"><span class="dot"></span><a class="bubble" ${u ? `href="${esc(u)}" target="_blank" rel="noopener noreferrer"` : 'role="button" tabindex="0"'} data-id="${esc(t.id)}"><span class="t"><b>${esc(t.brand || "브랜드")}</b><span>${esc(t.name || "")}</span></span><i>›</i></a></div>`;
+    return `<div class="tag ${t.y > 58 ? "up" : "down"}" style="left:${t.x}%;top:${t.y}%" data-id="${esc(t.id)}"><span class="dot"></span><a class="bubble" ${u ? `href="${esc(u)}" target="_blank" rel="noopener noreferrer"` : 'role="button" tabindex="0"'} data-id="${esc(t.id)}"><span class="t"><b>${esc(t.brand || "브랜드")}</b>${V.editing && t.name ? `<span>${esc(t.name)}</span>` : ""}</span><i>›</i></a></div>`;
   }).join("");
   return `<div class="slide"><div class="frame" data-w="${l.w||3}" data-h="${l.h||4}"><img src="${esc(srcOf(l))}" alt="${esc(l.note || "코디 사진")}">${tags}</div></div>`;
 }
@@ -493,7 +493,7 @@ function renderViewer(){
   $("tagBtn").hidden = V.editing || !(l.tags||[]).length;
   const items = (l.tags||[]).map(t => {
     const u = safeUrl(t.url);
-    return `<a class="chip" ${u && !V.editing ? `href="${esc(u)}" target="_blank" rel="noopener noreferrer"` : 'role="button" tabindex="0"'} data-id="${esc(t.id)}"><b>${esc(t.brand)} · ${esc(shopLabel(t.shop))}</b><span>${esc(t.name)}</span></a>`;
+    return `<a class="chip" ${u && !V.editing ? `href="${esc(u)}" target="_blank" rel="noopener noreferrer"` : 'role="button" tabindex="0"'} data-id="${esc(t.id)}"><b>${esc(shopLabel(t.shop))}${V.editing ? "" : "에서 보기"}</b><span>${esc(t.brand || "브랜드")}${V.editing && t.name ? ` · ${esc(t.name)}` : " ›"}</span></a>`;
   }).join("");
   $("vItems").innerHTML = V.editing
     ? items + `<button class="chip add-chip" id="metaBtn">영상·날짜·메모 / 삭제</button>`
