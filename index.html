@@ -128,10 +128,11 @@ h1{font-size:34px;font-weight:800;letter-spacing:-.02em;margin:0;line-height:1.1
 .fab svg{width:22px;height:22px}
 .notice{background:var(--fill);color:var(--muted);font-size:12px;line-height:1.5;text-align:center;padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));text-wrap:balance;border-bottom:1px solid var(--line)}
 .stats{margin-top:16px;display:flex;flex-direction:column;gap:22px}
-.periods{display:flex;gap:6px}
-.periods button{border:1px solid var(--line);background:var(--bg);color:var(--fg);font-size:13px;padding:6px 12px;border-radius:999px}
+.periods{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-inline:calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding-inline:max(16px,env(safe-area-inset-left,0px))}
+.periods::-webkit-scrollbar{display:none}
+.periods button{flex:0 0 auto;white-space:nowrap;border:1px solid var(--line);background:var(--bg);color:var(--fg);font-size:13px;padding:6px 12px;border-radius:999px}
 .periods button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg);font-weight:700}
-.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .tile{background:var(--fill);border-radius:12px;padding:12px}
 .tile b{display:block;font-size:24px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
 .tile span{font-size:12px;color:var(--muted)}
@@ -182,6 +183,29 @@ h1{font-size:34px;font-weight:800;letter-spacing:-.02em;margin:0;line-height:1.1
 .selbar button.danger{background:var(--fill);color:var(--danger)}
 .selbar button:disabled{opacity:.4}
 .sheet-desc{margin:-6px 0 14px;text-align:center;font-size:13px;color:var(--v-muted)}
+.range{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:10px;font-size:13px;color:var(--muted)}
+.range input{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:6px 8px;font-size:14px;color:var(--fg);min-width:0}
+.range button{border:0;background:var(--fg);color:var(--bg);border-radius:8px;padding:7px 12px;font-size:13px;font-weight:700}
+.period-label{margin:10px 0 0;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.tile em{display:block;font-style:normal;font-size:12px;margin-top:4px;color:var(--muted);font-variant-numeric:tabular-nums}
+.tile em.dlt-up{color:#16a34a}
+.tile em.dlt-down{color:var(--danger)}
+.insight{background:color-mix(in srgb,var(--accent) 9%,transparent);border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.55}
+.insight b{color:var(--accent)}
+.chart .col.peak .v{background:var(--accent)}
+.share{display:grid;grid-template-columns:88px minmax(0,1fr) auto;gap:10px;align-items:center;padding:6px 0;font-size:14px}
+.share span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.share .bar{height:8px;border-radius:4px;background:var(--fill);overflow:hidden}
+.share .bar i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.share b{white-space:nowrap;font-weight:600;text-align:right;font-variant-numeric:tabular-nums;font-size:13px}
+.perf{display:flex;flex-direction:column;font-size:13px}
+.perf > div{display:grid;grid-template-columns:minmax(0,1fr) 44px 44px 52px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.perf.img > div{grid-template-columns:36px minmax(0,1fr) 44px 44px 52px}
+.perf > div:first-child{color:var(--muted);font-size:11px;padding-top:0}
+.perf span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.perf img{width:36px;height:36px;object-fit:cover;object-position:50% 0;border-radius:6px;background:var(--fill)}
+.perf b{font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+.stats .hint{margin:6px 0 0;font-size:12px;color:var(--muted)}
 .foot{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:12px}
 .foot button{background:none;border:0;color:var(--muted);font-size:12px;padding:6px 0;text-decoration:underline}
 .meter{height:4px;border-radius:2px;background:var(--fill);overflow:hidden;width:120px;display:inline-block;vertical-align:middle;margin-left:6px}
@@ -827,9 +851,28 @@ const visitorId = (() => {
   catch { return "anon-" + Math.random().toString(36).slice(2); }
 })();
 const viewed = new Set();
-function logEvent(row){
+async function logEvent(row){
   if (canEdit || !authKnown) return; // 내 방문·클릭은 세지 않아요
-  sb.from("events").insert({ visitor: visitorId, ...row }).then(() => {}, () => {});
+  try {
+    const { error } = await sb.from("events").insert({ visitor: visitorId, ...row });
+    if (error && row.src !== undefined){ const { src, ...rest } = row; await sb.from("events").insert({ visitor: visitorId, ...rest }); }
+  } catch {}
+}
+function trafficSource(){
+  let p = "";
+  try { const u = new URLSearchParams(location.search); p = (u.get("from") || u.get("utm_source") || "").toLowerCase().trim(); } catch {}
+  const r = (document.referrer || "").toLowerCase(), ua = navigator.userAgent || "";
+  if (p === "yt") return "youtube";
+  const map = [["insta","instagram"],["youtube","youtube"],["youtu.be","youtube"],["tiktok","tiktok"],["naver","naver"],["google","google"],["kakao","kakao"],["threads","threads"],["facebook","facebook"],["twitter","x"],["t.co","x"],["x.com","x"]];
+  for (const s of [p, r]) if (s) for (const [k, v] of map) if (s.includes(k)) return v;
+  if (p) return p.slice(0, 30);
+  if (/Instagram/.test(ua)) return "instagram";
+  if (/KAKAOTALK/i.test(ua)) return "kakao";
+  if (/NAVER\(inapp/i.test(ua)) return "naver";
+  if (/FBAN|FBAV/.test(ua)) return "facebook";
+  if (/TikTok|musical_ly|BytedanceWebview/i.test(ua)) return "tiktok";
+  if (!r || r.includes(location.host)) return "direct";
+  try { return new URL(r).hostname.replace(/^www\./, "").slice(0, 30); } catch { return "etc"; }
 }
 function logView(l){ if (!l || l.example || viewed.has(l.id)) return; viewed.add(l.id); logEvent({ type:"view", look_id:l.id }); }
 function logClick(l, tid){
@@ -839,48 +882,113 @@ function logClick(l, tid){
 }
 function logVisit(){
   try { if (sessionStorage.getItem("closet-visit")) return; sessionStorage.setItem("closet-visit", "1"); } catch {}
-  logEvent({ type:"visit" });
+  logEvent({ type:"visit", src: trafficSource() });
 }
 
-let statDays = 7, statCache = {};
+const kstToday = () => new Date(Date.now() + 9*3600e3).toISOString().slice(0, 10);
+const addDays = (d, n) => new Date(Date.parse(d + "T00:00:00Z") + n*864e5).toISOString().slice(0, 10);
+const dayDiff = (a, b) => Math.round((Date.parse(b + "T00:00:00Z") - Date.parse(a + "T00:00:00Z")) / 864e5);
+const SRC_LABEL = { instagram:"인스타그램", youtube:"유튜브", tiktok:"틱톡", naver:"네이버", google:"구글", kakao:"카카오톡", threads:"스레드", facebook:"페이스북", x:"X(트위터)", direct:"직접 접속", unknown:"출처 기록 전" };
+const PERIODS = [["today","오늘"],["yesterday","어제"],["7","7일"],["30","30일"],["90","90일"],["custom","직접 선택"]];
+let statP = "7", statCustom = null, statCache = {};
+function statRange(){
+  const t = kstToday();
+  if (statP === "today") return [t, t];
+  if (statP === "yesterday"){ const y = addDays(t, -1); return [y, y]; }
+  if (statP === "custom" && statCustom) return statCustom;
+  if (statP === "custom") return [addDays(t, -13), t];
+  return [addDays(t, -(+statP - 1)), t];
+}
 async function renderStats(){
-  const key = statDays;
-  $("main").innerHTML = `<div class="stats"><div class="periods" id="periods">${[[1,"오늘"],[7,"7일"],[30,"30일"],[90,"90일"]].map(([d,l]) => `<button data-d="${d}" aria-pressed="${d===statDays}">${l}</button>`).join("")}</div><div id="statBody"><p class="muted">통계를 불러오는 중…</p></div></div>`;
-  $("periods").onclick = e => { const b = e.target.closest("button"); if (!b) return; statDays = +b.dataset.d; renderStats(); };
+  const [d1, d2] = statRange(), key = d1 + "~" + d2, len = dayDiff(d1, d2) + 1;
+  const md = s => `${+s.slice(5,7)}/${+s.slice(8,10)}`;
+  $("main").innerHTML = `<div class="stats"><div>
+      <div class="periods" id="periods">${PERIODS.map(([k,l]) => `<button data-p="${k}" aria-pressed="${k===statP}">${l}</button>`).join("")}</div>
+      ${statP === "custom" ? `<div class="range"><input type="date" id="rFrom" value="${d1}" max="${kstToday()}" aria-label="시작일"><span>~</span><input type="date" id="rTo" value="${d2}" max="${kstToday()}" aria-label="종료일"><button id="rGo">보기</button></div>` : ""}
+      <p class="period-label">${d1 === d2 ? fmtDate(d1) : `${fmtDate(d1)} ~ ${fmtDate(d2)} (${len}일)`} · 지난 기간: ${len === 1 ? fmtDate(addDays(d1, -1)) : `${md(addDays(d1, -len))} ~ ${md(addDays(d1, -1))}`}</p>
+    </div><div id="statBody" class="stats" style="margin-top:0"><p class="muted">통계를 불러오는 중…</p></div></div>`;
+  $("periods").onclick = e => { const b = e.target.closest("button"); if (!b) return; statP = b.dataset.p; renderStats(); };
+  if ($("rGo")) $("rGo").onclick = () => {
+    let a = $("rFrom").value, b = $("rTo").value; if (!a || !b) return;
+    if (a > b) [a, b] = [b, a];
+    if (dayDiff(a, b) > 365){ toast("최대 1년까지 볼 수 있어요"); return; }
+    statCustom = [a, b]; renderStats();
+  };
   let d = statCache[key];
   if (!d){
-    const { data, error } = await sb.rpc("closet_stats", { days: key });
-    if (error){ if (tab === "stats") $("statBody").innerHTML = `<p class="muted">통계를 불러오지 못했어요. Supabase에 통계 설정 코드를 실행했는지 확인해 주세요.</p>`; return; }
+    const { data, error } = await sb.rpc("closet_stats_range", { d1, d2 });
+    if (error){ if (tab === "stats") $("statBody").innerHTML = `<p class="muted">통계를 불러오지 못했어요. Supabase에 새 통계 설정 코드를 실행했는지 확인해 주세요.</p>`; return; }
     d = statCache[key] = data;
     setTimeout(() => { delete statCache[key]; }, 60000);
   }
-  if (tab !== "stats" || statDays !== key) return;
-  const T = d.totals || {}, num = n => Number(n||0).toLocaleString("ko-KR");
+  if (tab !== "stats" || key !== statRange().join("~")) return;
+
+  const T = d.totals || {}, Pv = d.prev || {}, num = n => Number(n||0).toLocaleString("ko-KR");
+  const pct = (a, b) => b ? (a / b * 100) : 0;
+  const ctr = pct(T.clicks, T.views), pctr = pct(Pv.clicks, Pv.views);
+  const delta = (c, p, isRate) => {
+    c = Number(c||0); p = Number(p||0);
+    if (isRate){ const dd = c - p; if (!p && !c) return `<em>지난 기간 기록 없음</em>`; return `<em class="${dd > 0 ? "dlt-up" : dd < 0 ? "dlt-down" : ""}">지난 기간 대비 ${dd > 0 ? "▲" : dd < 0 ? "▼" : ""} ${Math.abs(dd).toFixed(1)}%p</em>`; }
+    if (!p) return `<em>${c ? "지난 기간 기록 없음" : "-"}</em>`;
+    const r = (c - p) / p * 100;
+    return `<em class="${r > 0 ? "dlt-up" : r < 0 ? "dlt-down" : ""}">지난 기간 대비 ${r > 0 ? "▲" : r < 0 ? "▼" : ""} ${Math.abs(r).toFixed(0)}%</em>`;
+  };
   const byId = new Map(real.map(l => [l.id, l]));
-  // fill every day in range so gaps show as empty
+
+  // daily
   const daily = new Map((d.daily||[]).map(x => [x.day, x]));
-  const days = [];
-  for (let i = key - 1; i >= 0; i--){
-    const dt = new Date(Date.now() + 9*3600e3 - i*864e5).toISOString().slice(0,10);
-    days.push(daily.get(dt) || { day: dt, visitors: 0, views: 0, clicks: 0 });
-  }
-  const max = Math.max(1, ...days.map(x => Math.max(x.visitors, x.clicks)));
-  const md = s => `${+s.slice(5,7)}/${+s.slice(8,10)}`;
-  const chart = key > 1 ? `<section><h3>날짜별 추이</h3><div class="chart">${days.map(x => `<div class="col" title="${md(x.day)} 방문자 ${x.visitors} · 클릭 ${x.clicks}"><div class="v" style="height:${x.visitors/max*100}%"></div><div class="c" style="height:${x.clicks/max*100}%"></div></div>`).join("")}</div><div class="axis"><span>${md(days[0].day)}</span><span>${md(days[days.length-1].day)}</span></div><div class="legend"><span><i style="background:color-mix(in srgb,var(--accent) 30%,transparent)"></i>방문자</span><span><i style="background:var(--accent)"></i>링크 클릭</span></div></section>` : "";
-  const items = (d.topItems||[]).map((x,i) => `<div><em>${i+1}</em><span>${esc(x.item)} <small class="muted">${esc(shopLabel(x.shop))}</small></span><strong>${num(x.n)}</strong></div>`).join("");
-  const looksTop = (d.topLooks||[]).map((x,i) => { const l = byId.get(x.look_id); return `<div><em>${i+1}</em>${l ? `<img src="${esc(thumbOf(l))}" alt="" loading="lazy">` : "<span></span>"}<span>${l ? esc(vkey(l) || l.note || fmtDate(l.date)) : "삭제된 코디"}</span><strong>${num(x.n)}</strong></div>`; }).join("");
-  const shops = (d.byShop||[]).map(x => `<div><em></em><span>${esc(shopLabel(x.shop))}</span><strong>${num(x.n)}</strong></div>`).join("");
+  const days = []; for (let i = 0; i < len; i++){ const dt = addDays(d1, i); days.push(daily.get(dt) || { day: dt, visitors: 0, views: 0, clicks: 0 }); }
+  const dmax = Math.max(1, ...days.map(x => Math.max(x.visitors, x.clicks)));
+  const dailyHTML = len > 1 ? `<section><h3>날짜별 추이</h3><div class="chart">${days.map(x => `<div class="col" title="${md(x.day)} 방문자 ${x.visitors} · 클릭 ${x.clicks}"><div class="v" style="height:${x.visitors/dmax*100}%"></div><div class="c" style="height:${x.clicks/dmax*100}%"></div></div>`).join("")}</div><div class="axis"><span>${md(days[0].day)}</span><span>${md(days[days.length-1].day)}</span></div><div class="legend"><span><i style="background:color-mix(in srgb,var(--accent) 30%,transparent)"></i>방문자</span><span><i style="background:var(--accent)"></i>링크 클릭</span></div></section>` : "";
+
+  // hourly
+  const hmap = new Map((d.hourly||[]).map(x => [x.hour, x]));
+  const hours = Array.from({length:24}, (_, h) => hmap.get(h) || { hour: h, visitors: 0, clicks: 0 });
+  const hmax = Math.max(1, ...hours.map(x => x.visitors));
+  const peak = hours.reduce((a, x) => x.visitors > a.visitors ? x : a, hours[0]);
+  const hlabel = h => h === 0 ? "밤 12시" : h < 12 ? `오전 ${h}시` : h === 12 ? "낮 12시" : `오후 ${h-12}시`;
+  const hourlyHTML = `<section><h3>시간대별 방문</h3><div class="chart">${hours.map(x => `<div class="col${x === peak && peak.visitors ? " peak" : ""}" title="${hlabel(x.hour)} 방문자 ${x.visitors} · 클릭 ${x.clicks}"><div class="v" style="height:${x.visitors/hmax*100}%"></div></div>`).join("")}</div><div class="axis"><span>0시</span><span>6시</span><span>12시</span><span>18시</span><span>23시</span></div>${peak.visitors ? `<p class="hint">가장 많이 들어오는 시간: <b>${hlabel(peak.hour)}</b> (${num(peak.visitors)}명)</p>` : ""}</section>`;
+
+  // sources
+  const srcs = d.bySrc || [], stot = srcs.reduce((n, x) => n + x.n, 0);
+  const srcHTML = `<section><h3>어디서 들어왔나요</h3>${srcs.length ? srcs.map(x => `<div class="share"><span>${esc(SRC_LABEL[x.src] || x.src)}</span><span class="bar"><i style="width:${pct(x.n, stot).toFixed(1)}%"></i></span><b>${num(x.n)} · ${pct(x.n, stot).toFixed(0)}%</b></div>`).join("") : `<p class="muted">아직 기록이 없어요.</p>`}<p class="hint">인스타 프로필 링크를 <b>…/closet/?from=insta</b>, 유튜브 설명란 링크를 <b>…/closet/?from=youtube</b>로 걸면 더 정확하게 구분돼요.</p></section>`;
+
+  // per look / per video
+  const looksPerf = (d.byLook||[]).map(x => ({ ...x, l: byId.get(x.look_id) })).filter(x => x.l);
+  const vids = new Map();
+  for (const x of looksPerf){ const k = vkey(x.l); const v = vids.get(k) || { k, views:0, clicks:0, n:0 }; v.views += x.views; v.clicks += x.clicks; v.n++; vids.set(k, v); }
+  const vlist = [...vids.values()].sort((a,b) => b.clicks - a.clicks || b.views - a.views);
+  const rateTxt = (c, v) => v ? `${Math.min(100, pct(c, v)).toFixed(0)}%` : "-";
+  const vidHTML = `<section><h3>영상별 성과</h3>${vlist.length ? `<div class="perf"><div><span>영상</span><b>조회</b><b>클릭</b><b>클릭률</b></div>${vlist.map(v => `<div><span>${esc(vname(v.k))}</span><b>${num(v.views)}</b><b>${num(v.clicks)}</b><b>${rateTxt(v.clicks, v.views)}</b></div>`).join("")}</div>` : `<p class="muted">아직 기록이 없어요.</p>`}</section>`;
+  const posOf = new Map(); for (const g of groupVideos(real)) g.ls.forEach((l, i) => posOf.set(l.id, i + 1));
+  const lookRow = x => `<div><img src="${esc(thumbOf(x.l))}" alt="" loading="lazy"><span>${esc(vname(vkey(x.l)))} #${posOf.get(x.l.id) || ""}</span><b>${num(x.views)}</b><b>${num(x.clicks)}</b><b>${rateTxt(x.clicks, x.views)}</b></div>`;
+  const head = `<div><span></span><span>코디</span><b>조회</b><b>클릭</b><b>클릭률</b></div>`;
+  const topLooks = looksPerf.slice().sort((a,b) => b.views - a.views).slice(0, 10);
+  const lowCtr = looksPerf.filter(x => x.views >= 10).sort((a,b) => pct(a.clicks, a.views) - pct(b.clicks, b.views)).slice(0, 5);
+  const looksHTML = `<section><h3>많이 본 코디</h3>${topLooks.length ? `<div class="perf img">${head}${topLooks.map(lookRow).join("")}</div>` : `<p class="muted">아직 조회 기록이 없어요.</p>`}</section>`
+    + (lowCtr.length ? `<section><h3>조회는 많은데 클릭이 적은 코디</h3><div class="perf img">${head}${lowCtr.map(lookRow).join("")}</div><p class="hint">조회 10회 이상인 코디 중 클릭률이 낮은 순이에요. 태그 위치를 바꾸거나 아이템 태그를 더 달아 보세요.</p></section>` : "");
+
+  const items = d.topItems || [], itot = items.reduce((n, x) => n + x.n, 0);
+  const itemsHTML2 = `<section><h3>많이 클릭된 아이템</h3>${items.length ? `<div class="rank noimg">${items.map((x,i) => `<div><em>${i+1}</em><span>${esc(x.item)} <small class="muted">${esc(shopLabel(x.shop))}</small></span><strong>${num(x.n)}</strong></div>`).join("")}</div>` : `<p class="muted">아직 클릭 기록이 없어요.</p>`}</section>`;
+  const shops = d.byShop || [], shtot = shops.reduce((n, x) => n + x.n, 0);
+  const shopHTML = `<section><h3>판매처별 클릭</h3>${shops.length ? shops.map(x => `<div class="share"><span>${esc(shopLabel(x.shop))}</span><span class="bar"><i style="width:${pct(x.n, shtot).toFixed(1)}%"></i></span><b>${num(x.n)} · ${pct(x.n, shtot).toFixed(0)}%</b></div>`).join("") : `<p class="muted">아직 클릭 기록이 없어요.</p>`}</section>`;
+
+  // one-line summary
+  const tips = [];
+  if (vlist[0] && vlist[0].clicks) tips.push(`클릭이 가장 많은 영상은 <b>${esc(vname(vlist[0].k))}</b>예요.`);
+  if (items[0]) tips.push(`가장 많이 눌린 아이템은 <b>${esc(items[0].item)}</b>(${num(items[0].n)}회)예요.`);
+  if (peak.visitors) tips.push(`방문은 <b>${hlabel(peak.hour)}</b>에 가장 많아요.`);
+  const insight = tips.length ? `<div class="insight">${tips.join(" ")}</div>` : "";
+
   $("statBody").innerHTML = `
     <section class="tiles">
-      <div class="tile"><b>${num(T.visitors)}</b><span>방문자</span></div>
-      <div class="tile"><b>${num(T.views)}</b><span>코디 조회</span></div>
-      <div class="tile"><b>${num(T.clicks)}</b><span>링크 클릭</span></div>
+      <div class="tile"><b>${num(T.visitors)}</b><span>방문자</span>${delta(T.visitors, Pv.visitors)}</div>
+      <div class="tile"><b>${num(T.views)}</b><span>코디 조회</span>${delta(T.views, Pv.views)}</div>
+      <div class="tile"><b>${num(T.clicks)}</b><span>링크 클릭</span>${delta(T.clicks, Pv.clicks)}</div>
+      <div class="tile"><b>${T.views ? Math.min(100, ctr).toFixed(1) + "%" : "-"}</b><span>클릭률 (클릭 ÷ 조회)</span>${delta(ctr, pctr, true)}</div>
     </section>
-    ${chart}
-    <section><h3>많이 클릭된 아이템</h3>${items ? `<div class="rank noimg">${items}</div>` : `<p class="muted">아직 클릭 기록이 없어요.</p>`}</section>
-    <section><h3>판매처별 클릭</h3>${shops ? `<div class="rank noimg">${shops}</div>` : `<p class="muted">아직 클릭 기록이 없어요.</p>`}</section>
-    <section><h3>많이 본 코디</h3>${looksTop ? `<div class="rank">${looksTop}</div>` : `<p class="muted">아직 조회 기록이 없어요.</p>`}</section>
-    <p class="muted">내가 관리자로 로그인한 상태의 방문과 클릭은 세지 않아요. 같은 사람이 같은 날 여러 번 들어와도 방문자는 1명으로 세요.</p>`;
+    ${insight}${dailyHTML}${hourlyHTML}${srcHTML}${vidHTML}${itemsHTML2}${shopHTML}${looksHTML}
+    <p class="muted">내가 관리자로 로그인한 상태의 방문과 클릭은 세지 않아요. 방문자는 기간 안에서 중복 없이 센 숫자예요.</p>`;
 }
 
 /* ---------- Boot ---------- */
