@@ -242,7 +242,7 @@ h1{font-size:34px;font-weight:800;letter-spacing:-.02em;margin:0;line-height:1.1
 </div>
 <button class="fab" id="addBtn" hidden aria-label="코디 추가"><svg viewBox="0 0 24 24" fill="none"><path d="M12 4v16M4 12h16" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></button>
 <div class="selbar" id="selBar" hidden><span id="selCount">코디를 선택하세요</span><div><button id="selGroup">영상으로 묶기</button><button id="selDel" class="danger">삭제</button></div></div>
-<input type="file" id="fileInput" accept="image/*" multiple hidden>
+<input type="file" id="fileInput" accept="image/*,.json,application/json" multiple hidden>
 
 <div id="viewer" hidden class="show-tags">
   <div class="v-top">
@@ -767,10 +767,47 @@ $("addBtn").onclick = () => $("fileInput").click();
 $("fileInput").onchange = e => {
   const files = [...e.target.files]; e.target.value = "";
   if (!files.length || !canEdit) return;
+  const pkg = files.find(f => /\.json$/i.test(f.name) || f.type === "application/json");
+  if (pkg){ importPackage(pkg); return; }
   openVideoSheet({ title: `코디 ${files.length}개 올리기`, desc: "같은 영상 제목끼리 하나의 앨범으로 묶여요.", value: tab === "videos" && album ? album : "", okLabel: "올리기", skipLabel: "영상 없이 올리기",
     onOk: v => { uploadFiles(files, v); }, onSkip: () => uploadFiles(files, "") });
 };
-async function uploadFiles(files, video){
+
+/* ---------- 릴스 제작기 등록 파일 (사진 + 제품 태그 한 번에) ---------- */
+function cleanTags(list){
+  const keys = SHOPS.map(s => s[0]);
+  return (Array.isArray(list) ? list : []).slice(0, 12).map((t, j) => ({
+    id: "t" + Date.now().toString(36) + j,
+    x: Math.min(95, Math.max(5, Number(t.x) || 50)),
+    y: Math.min(95, Math.max(5, Number(t.y) || 50)),
+    brand: String(t.brand || "").trim().slice(0, 60),
+    name: String(t.name || "").trim().slice(0, 100),
+    shop: keys.includes(t.shop) ? t.shop : "etc",
+    url: safeUrl(String(t.url || "").trim())
+  })).filter(t => t.brand || t.name);
+}
+async function importPackage(file){
+  let pkg;
+  try { pkg = JSON.parse(await file.text()); } catch { toast("등록 파일을 열 수 없어요. 제작기에서 다시 저장해 주세요.", 3500); return; }
+  if (!pkg || pkg.kind !== "dearbyu-closet" || !Array.isArray(pkg.looks) || !pkg.looks.length){ toast("릴스 제작기에서 만든 등록 파일이 아니에요.", 3500); return; }
+  toast("등록 파일 읽는 중…", 0);
+  const blobs = [], tagsList = [];
+  for (const [n, l] of pkg.looks.entries()){
+    if (typeof l.image !== "string" || !l.image.startsWith("data:image/")) continue;
+    try {
+      const b = await (await fetch(l.image)).blob();
+      blobs.push(new File([b], `look${n + 1}.jpg`, { type: b.type || "image/jpeg" }));
+      tagsList.push(cleanTags(l.tags));
+    } catch {}
+  }
+  if (!blobs.length){ toast("등록 파일에 사진이 없어요.", 3500); return; }
+  const nTags = tagsList.reduce((s, t) => s + t.length, 0);
+  toast("등록 파일을 읽었어요");
+  openVideoSheet({ title: `코디 ${blobs.length}장 · 제품 ${nTags}개 올리기`, desc: "릴스 제작기에서 만든 등록 파일이에요. 영상 제목을 확인해 주세요.", value: String(pkg.video || "").slice(0, 60), okLabel: "올리기", skipLabel: "영상 없이 올리기",
+    onOk: v => { uploadFiles(blobs, v, tagsList); }, onSkip: () => uploadFiles(blobs, "", tagsList) });
+}
+
+async function uploadFiles(files, video, tagsList){
   const added = [];
   for (const [n, f] of files.entries()){
     toast(`올리는 중 ${n + 1} / ${files.length}`, 0);
@@ -783,7 +820,7 @@ async function uploadFiles(files, video){
       if (up2.error) throw up2.error;
       const d = new Date(f.lastModified || Date.now());
       const date = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-      const { data, error } = await sb.from("looks").insert({ photo: key + ".jpg", thumb: key + "_t.jpg", w: big.w, h: big.h, bytes: big.blob.size + small.blob.size, date, note: "", video, tags: [] }).select().single();
+      const { data, error } = await sb.from("looks").insert({ photo: key + ".jpg", thumb: key + "_t.jpg", w: big.w, h: big.h, bytes: big.blob.size + small.blob.size, date, note: "", video, tags: tagsList ? (tagsList[n] || []) : [] }).select().single();
       if (error) throw error;
       real.push(fromRow(data)); added.push(data.id);
     } catch (err) {
