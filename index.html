@@ -84,6 +84,9 @@ h1{font-size:34px;font-weight:800;letter-spacing:-.02em;margin:0;line-height:1.1
 .tag.down .bubble{top:14px}.tag.down .bubble::after{top:-4px}
 .tag.up .bubble{bottom:14px}.tag.up .bubble::after{bottom:-4px}
 #viewer:not(.show-tags) .tag{opacity:0;pointer-events:none}
+.dot::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:2px solid rgba(255,255,255,.75);animation:pulse 1.8s ease-out infinite}
+@keyframes pulse{0%{transform:scale(.6);opacity:1}100%{transform:scale(1.5);opacity:0}}
+.editing .dot::after{display:none}
 .editing .dot{background:#ffd60a}
 .editing .tag .dot,.editing .tag .bubble{cursor:grab;touch-action:none}
 .editing .tag.dragging{transition:none}
@@ -233,7 +236,7 @@ h1{font-size:34px;font-weight:800;letter-spacing:-.02em;margin:0;line-height:1.1
       <button id="tabItems" aria-pressed="false">아이템</button>
       <button id="tabStats" aria-pressed="false" hidden>통계</button>
     </div>
-    <div class="search" id="searchBox"><svg viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5.2" stroke="currentColor" stroke-width="1.8"/><path d="m11 11 3.5 3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><input id="q" type="search" placeholder="브랜드, 제품명, 영상 제목 검색" autocomplete="off" enterkeyhint="search" aria-label="코디 검색"></div>
+    <div class="search" id="searchBox"><svg viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5.2" stroke="currentColor" stroke-width="1.8"/><path d="m11 11 3.5 3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><input id="q" type="search" placeholder="영상 제목, 아이템 종류 검색" autocomplete="off" enterkeyhint="search" aria-label="코디 검색"></div>
   </header>
   <div id="banner"></div>
   <main id="main"></main>
@@ -242,7 +245,7 @@ h1{font-size:34px;font-weight:800;letter-spacing:-.02em;margin:0;line-height:1.1
 </div>
 <button class="fab" id="addBtn" hidden aria-label="코디 추가"><svg viewBox="0 0 24 24" fill="none"><path d="M12 4v16M4 12h16" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></button>
 <div class="selbar" id="selBar" hidden><span id="selCount">코디를 선택하세요</span><div><button id="selGroup">영상으로 묶기</button><button id="selDel" class="danger">삭제</button></div></div>
-<input type="file" id="fileInput" accept="image/*,.json,application/json" multiple hidden>
+<input type="file" id="fileInput" accept="image/*" multiple hidden>
 
 <div id="viewer" hidden class="show-tags">
   <div class="v-top">
@@ -271,6 +274,9 @@ const BUCKET = "looks";
 const QUOTA = 1024 * 1048576;
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const SHOPS = [["ably","에이블리"],["zigzag","지그재그"],["musinsa","무신사"],["29cm","29CM"],["wconcept","W컨셉"],["etc","기타"]];
+const CATS = ["아우터","상의","하의","원피스","신발","가방","액세서리","기타"];
+const catOf = t => t.cat || "제품";
+const ctaOf = t => (t.shop && t.shop !== "etc") ? `${shopLabel(t.shop)}에서 보기` : "정보 보기";
 const shopLabel = k => (SHOPS.find(s => s[0] === k) || [0, k || ""])[1];
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const safeUrl = u => { try { const x = new URL(u); return /^https?:$/.test(x.protocol) ? x.href : ""; } catch { return ""; } };
@@ -312,7 +318,7 @@ const SPOTS = [[50,30],[50,64],[42,89],[81,59]];
 const SHOP_HOME = {ably:"https://m.a-bly.com/",zigzag:"https://zigzag.kr/",musinsa:"https://www.musinsa.com/","29cm":"https://www.29cm.co.kr/",wconcept:"https://www.wconcept.co.kr/",etc:"https://www.google.com/"};
 const examples = EX.map(([date,note,c],i) => ({
   id:"ex"+i, example:true, src:flatlay(c), w:600, h:800, date, note, video: i < 3 ? "가을 데일리룩 모음" : "간절기 코디 하울", createdAt: i,
-  tags: EX_ITEMS[i].map(([brand,name,shop],j) => ({id:"t"+j, x:SPOTS[j][0], y:SPOTS[j][1], brand, name, shop, url:SHOP_HOME[shop]}))
+  tags: EX_ITEMS[i].map(([brand,name,shop],j) => ({id:"t"+j, x:SPOTS[j][0], y:SPOTS[j][1], brand, name, shop, url:SHOP_HOME[shop], cat:["상의","하의","신발","가방"][j]}))
 }));
 
 /* ---------- State ---------- */
@@ -348,7 +354,7 @@ function groupVideos(arr){
   groups.sort((a,b) => (a.k === "") - (b.k === "") || b.last.localeCompare(a.last));
   return groups;
 }
-function hay(l){ return [l.video, l.note, l.date, fmtDate(l.date), ...(l.tags||[]).flatMap(t => [t.brand, t.name, shopLabel(t.shop)])].join(" ").toLowerCase(); }
+function hay(l){ return [l.video, l.note, l.date, fmtDate(l.date), ...(l.tags||[]).flatMap(t => [t.brand, t.name, t.cat, shopLabel(t.shop)])].join(" ").toLowerCase(); }
 
 /* ---------- Grid & items ---------- */
 function render(){
@@ -408,7 +414,7 @@ function allHTML(groups){
   return groups.map(g => `<section class="month"><h2>${esc(vname(g.k))}<small>${g.ls.length}</small></h2><p class="meta">${esc(fmtDate(g.date))}</p><div class="grid">${g.ls.map(l => cellHTML(l, i++)).join("")}</div></section>`).join("");
 }
 function searchHTML(q){
-  if (!looks.length) return `<p class="muted result">'${esc(q)}'에 맞는 코디가 없어요. 브랜드, 제품명, 영상 제목으로 검색해 보세요.</p>`;
+  if (!looks.length) return `<p class="muted result">'${esc(q)}'에 맞는 코디가 없어요. 영상 제목이나 아우터, 가방 같은 아이템 종류로 검색해 보세요.</p>`;
   return `<p class="muted result">'${esc(q)}' 검색 결과 ${looks.length}개</p><div class="grid">${looks.map((l,i) => cellHTML(l, i)).join("")}</div>`;
 }
 
@@ -424,7 +430,7 @@ function itemsHTML(q){
   let h = `<div class="items">`;
   for (const {t, l, n} of map.values()){
     const u = safeUrl(t.url);
-    h += `<a class="item" data-lid="${esc(l.id)}" data-tid="${esc(t.id)}" ${u ? `href="${esc(u)}" target="_blank" rel="noopener noreferrer"` : ""}><img src="${esc(thumbOf(l))}" alt="" loading="lazy"><div style="min-width:0"><span>${esc(t.brand || "브랜드")}</span><em>코디 ${n}개에 사용</em></div><span class="shop">${esc(shopLabel(t.shop))}에서 보기 ›</span></a>`;
+    h += `<a class="item" data-lid="${esc(l.id)}" data-tid="${esc(t.id)}" ${u ? `href="${esc(u)}" target="_blank" rel="noopener noreferrer"` : ""}><img src="${esc(thumbOf(l))}" alt="" loading="lazy"><div style="min-width:0"><span>${esc(catOf(t))}</span><em>코디 ${n}개에 사용</em></div><span class="shop">${esc(ctaOf(t))} ›</span></a>`;
   }
   return h + `</div>`;
 }
@@ -493,6 +499,7 @@ function openViewer(i, edit=false){
   renderViewer();
   try { if (!looks[i].example) history.replaceState(null, "", "#" + looks[i].id); } catch {}
   logView(looks[i]);
+  if (!canEdit && (looks[i].tags||[]).length){ try { if (!localStorage.getItem("closet-taghint")){ localStorage.setItem("closet-taghint", "1"); setTimeout(() => toast("태그를 누르면 제품 정보를 볼 수 있어요", 3000), 500); } } catch {} }
 }
 function closeViewer(){ const was = V.editing; V.open = false; V.editing = false; viewer.hidden = true; document.body.style.overflow = ""; try { history.replaceState(null, "", location.pathname + location.search); } catch {} closeSheet(); }
 
@@ -500,7 +507,7 @@ function slideHTML(l){
   if (!l) return `<div class="slide"></div>`;
   const tags = (l.tags||[]).map(t => {
     const u = safeUrl(t.url);
-    return `<div class="tag ${t.y > 58 ? "up" : "down"}" style="left:${t.x}%;top:${t.y}%" data-id="${esc(t.id)}"><span class="dot"></span><a class="bubble" ${u ? `href="${esc(u)}" target="_blank" rel="noopener noreferrer"` : 'role="button" tabindex="0"'} data-id="${esc(t.id)}"><span class="t"><b>${esc(t.brand || "브랜드")}</b>${V.editing && t.name ? `<span>${esc(t.name)}</span>` : ""}</span><i>›</i></a></div>`;
+    return `<div class="tag ${t.y > 58 ? "up" : "down"}" style="left:${t.x}%;top:${t.y}%" data-id="${esc(t.id)}"><span class="dot"></span><a class="bubble" ${u ? `href="${esc(u)}" target="_blank" rel="noopener noreferrer"` : 'role="button" tabindex="0"'} data-id="${esc(t.id)}"><span class="t">${V.editing ? `<b>${esc(t.brand || "브랜드")}</b>${t.name ? `<span>${esc(t.name)}</span>` : ""}` : `<b>${esc(catOf(t))}</b><span>${esc(ctaOf(t))}</span>`}</span><i>›</i></a></div>`;
   }).join("");
   return `<div class="slide"><div class="frame" data-w="${l.w||3}" data-h="${l.h||4}"><img src="${esc(srcOf(l))}" alt="${esc(l.note || "코디 사진")}">${tags}</div></div>`;
 }
@@ -521,7 +528,7 @@ function renderViewer(){
   $("tagBtn").hidden = V.editing || !(l.tags||[]).length;
   const items = (l.tags||[]).map(t => {
     const u = safeUrl(t.url);
-    return `<a class="chip" ${u && !V.editing ? `href="${esc(u)}" target="_blank" rel="noopener noreferrer"` : 'role="button" tabindex="0"'} data-id="${esc(t.id)}"><b>${esc(shopLabel(t.shop))}${V.editing ? "" : "에서 보기"}</b><span>${esc(t.brand || "브랜드")}${V.editing && t.name ? ` · ${esc(t.name)}` : " ›"}</span></a>`;
+    return `<a class="chip" ${u && !V.editing ? `href="${esc(u)}" target="_blank" rel="noopener noreferrer"` : 'role="button" tabindex="0"'} data-id="${esc(t.id)}">${V.editing ? `<b>${esc(catOf(t))} · ${esc(shopLabel(t.shop))}</b><span>${esc(t.brand || "브랜드")}${t.name ? ` · ${esc(t.name)}` : ""}</span>` : `<b>${esc(ctaOf(t))}</b><span>${esc(catOf(t))} ›</span>`}</a>`;
   }).join("");
   $("vItems").innerHTML = V.editing
     ? items + `<button class="chip add-chip" id="metaBtn">영상·날짜·메모 / 삭제</button>`
@@ -704,14 +711,16 @@ function openTagSheet(tagId, x, y){
   const l = looks[V.i]; if (!l || l.example) return;
   const t = tagId ? (l.tags||[]).find(t => t.id === tagId) : { brand:"", name:"", shop:"ably", url:"" };
   if (!t) return;
-  let shop = t.shop || "ably";
+  let shop = t.shop || "ably", cat = t.cat || "";
   sheet(`<h3>${tagId ? "아이템 수정" : "아이템 태그 추가"}</h3>
     <div class="field"><label for="fBrand">브랜드 / 쇼핑몰명</label><input id="fBrand" value="${esc(t.brand)}" placeholder="예: 모노레이어" autocomplete="off"></div>
     <div class="field"><label for="fName">제품명</label><input id="fName" value="${esc(t.name)}" placeholder="예: 울 라운드 니트" autocomplete="off"></div>
+    <div class="field"><label>종류 <span style="font-weight:400">(방문자에게는 이것만 보여요)</span></label><div class="shops" id="fCats">${CATS.map(c => `<button type="button" data-k="${c}" aria-pressed="${c===cat}">${c}</button>`).join("")}</div></div>
     <div class="field"><label>판매처</label><div class="shops" id="fShops">${SHOPS.map(([k,v]) => `<button type="button" data-k="${k}" aria-pressed="${k===shop}">${v}</button>`).join("")}</div></div>
     <div class="field"><label for="fUrl">판매 페이지 링크</label><input id="fUrl" type="url" inputmode="url" value="${esc(t.url)}" placeholder="https://m.a-bly.com/goods/…" autocomplete="off"></div>
     <div class="err" id="fErr"></div>
     <div class="row">${tagId ? '<button class="btn-d" id="fDel">태그 삭제</button>' : '<button class="btn-s" id="fCancel">취소</button>'}<button class="btn-p" id="fSave">저장</button></div>`);
+  $("fCats").onclick = e => { const b = e.target.closest("button"); if (!b) return; cat = b.dataset.k; $("fCats").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); };
   $("fShops").onclick = e => { const b = e.target.closest("button"); if (!b) return; shop = b.dataset.k; $("fShops").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); };
   if ($("fCancel")) $("fCancel").onclick = closeSheet;
   if ($("fDel")) $("fDel").onclick = async () => { await saveTags(l, (l.tags||[]).filter(x => x.id !== tagId)); closeSheet(); };
@@ -721,8 +730,8 @@ function openTagSheet(tagId, x, y){
     const url = raw ? safeUrl(/^https?:\/\//i.test(raw) ? raw : "https://" + raw) : "";
     if (raw && !url){ $("fErr").textContent = "링크 형식을 확인해 주세요. https:// 로 시작하는 주소를 붙여넣어 주세요."; return; }
     const tags = (l.tags||[]).map(x => ({...x}));
-    if (tagId){ Object.assign(tags.find(x => x.id === tagId), {brand, name, shop, url}); }
-    else tags.push({ id: "t" + Date.now().toString(36), x, y, brand, name, shop, url });
+    if (tagId){ Object.assign(tags.find(x => x.id === tagId), {brand, name, shop, url, cat}); }
+    else tags.push({ id: "t" + Date.now().toString(36), x, y, brand, name, shop, url, cat });
     $("fSave").disabled = true;
     const ok = await saveTags(l, tags);
     if (ok) closeSheet(); else $("fSave").disabled = false;
@@ -767,47 +776,10 @@ $("addBtn").onclick = () => $("fileInput").click();
 $("fileInput").onchange = e => {
   const files = [...e.target.files]; e.target.value = "";
   if (!files.length || !canEdit) return;
-  const pkg = files.find(f => /\.json$/i.test(f.name) || f.type === "application/json");
-  if (pkg){ importPackage(pkg); return; }
   openVideoSheet({ title: `코디 ${files.length}개 올리기`, desc: "같은 영상 제목끼리 하나의 앨범으로 묶여요.", value: tab === "videos" && album ? album : "", okLabel: "올리기", skipLabel: "영상 없이 올리기",
     onOk: v => { uploadFiles(files, v); }, onSkip: () => uploadFiles(files, "") });
 };
-
-/* ---------- 릴스 제작기 등록 파일 (사진 + 제품 태그 한 번에) ---------- */
-function cleanTags(list){
-  const keys = SHOPS.map(s => s[0]);
-  return (Array.isArray(list) ? list : []).slice(0, 12).map((t, j) => ({
-    id: "t" + Date.now().toString(36) + j,
-    x: Math.min(95, Math.max(5, Number(t.x) || 50)),
-    y: Math.min(95, Math.max(5, Number(t.y) || 50)),
-    brand: String(t.brand || "").trim().slice(0, 60),
-    name: String(t.name || "").trim().slice(0, 100),
-    shop: keys.includes(t.shop) ? t.shop : "etc",
-    url: safeUrl(String(t.url || "").trim())
-  })).filter(t => t.brand || t.name);
-}
-async function importPackage(file){
-  let pkg;
-  try { pkg = JSON.parse(await file.text()); } catch { toast("등록 파일을 열 수 없어요. 제작기에서 다시 저장해 주세요.", 3500); return; }
-  if (!pkg || pkg.kind !== "dearbyu-closet" || !Array.isArray(pkg.looks) || !pkg.looks.length){ toast("릴스 제작기에서 만든 등록 파일이 아니에요.", 3500); return; }
-  toast("등록 파일 읽는 중…", 0);
-  const blobs = [], tagsList = [];
-  for (const [n, l] of pkg.looks.entries()){
-    if (typeof l.image !== "string" || !l.image.startsWith("data:image/")) continue;
-    try {
-      const b = await (await fetch(l.image)).blob();
-      blobs.push(new File([b], `look${n + 1}.jpg`, { type: b.type || "image/jpeg" }));
-      tagsList.push(cleanTags(l.tags));
-    } catch {}
-  }
-  if (!blobs.length){ toast("등록 파일에 사진이 없어요.", 3500); return; }
-  const nTags = tagsList.reduce((s, t) => s + t.length, 0);
-  toast("등록 파일을 읽었어요");
-  openVideoSheet({ title: `코디 ${blobs.length}장 · 제품 ${nTags}개 올리기`, desc: "릴스 제작기에서 만든 등록 파일이에요. 영상 제목을 확인해 주세요.", value: String(pkg.video || "").slice(0, 60), okLabel: "올리기", skipLabel: "영상 없이 올리기",
-    onOk: v => { uploadFiles(blobs, v, tagsList); }, onSkip: () => uploadFiles(blobs, "", tagsList) });
-}
-
-async function uploadFiles(files, video, tagsList){
+async function uploadFiles(files, video){
   const added = [];
   for (const [n, f] of files.entries()){
     toast(`올리는 중 ${n + 1} / ${files.length}`, 0);
@@ -820,7 +792,7 @@ async function uploadFiles(files, video, tagsList){
       if (up2.error) throw up2.error;
       const d = new Date(f.lastModified || Date.now());
       const date = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-      const { data, error } = await sb.from("looks").insert({ photo: key + ".jpg", thumb: key + "_t.jpg", w: big.w, h: big.h, bytes: big.blob.size + small.blob.size, date, note: "", video, tags: tagsList ? (tagsList[n] || []) : [] }).select().single();
+      const { data, error } = await sb.from("looks").insert({ photo: key + ".jpg", thumb: key + "_t.jpg", w: big.w, h: big.h, bytes: big.blob.size + small.blob.size, date, note: "", video, tags: [] }).select().single();
       if (error) throw error;
       real.push(fromRow(data)); added.push(data.id);
     } catch (err) {
